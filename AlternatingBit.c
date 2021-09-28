@@ -43,11 +43,12 @@ struct pkt {
 A_output(message)
 struct msg message;
 {
-     // struct pkt p;
-     // printf("Packet Payload: %s", p.payload);
-     // memcpy(p.payload, message.data, 20);
-     // printf("Message Data: %s", p.payload);
-     // return 0;
+      struct pkt p;
+      printf("Message Data: %.20s\n", message.data);
+      memcpy(p.payload, message.data, 20);
+      printf("Package Payload: %.20s\n", p.payload);
+      tolayer3(1, p);
+      return 0;
 }
 
 B_output(message)  /* need be completed only for extra credit */
@@ -138,11 +139,11 @@ struct event* evlist = NULL;   /* the event list */
 
 int TRACE = 1;             /* for my debugging */
 int nsim = 0;              /* number of messages from 5 to 4 so far */
-int nsimmax = 0;           /* number of msgs to generate, then stop */
+int nsimmax = 3;           /* number of msgs to generate, then stop */
 float time = 0.000;
-float lossprob;            /* probability that a packet is dropped  */
-float corruptprob;         /* probability that one bit is packet is flipped */
-float lambda;              /* arrival rate of messages from layer 5 */
+float lossprob = 0;            /* probability that a packet is dropped  */
+float corruptprob = 0;         /* probability that one bit is packet is flipped */
+float lambda = 1000;              /* arrival rate of messages from layer 5 */
 int   ntolayer3;           /* number sent into layer 3 */
 int   nlost;               /* number lost in media */
 int ncorrupt;              /* number corrupted by media*/
@@ -235,17 +236,17 @@ init()                         /* initialize the simulator */
      float jimsrand();
 
 
-     printf("-----  Stop and Wait Network Simulator Version 1.1 -------- \n\n");
-     printf("Enter the number of messages to simulate: ");
-     scanf_s("%d", &nsimmax);
-     printf("Enter  packet loss probability [enter 0.0 for no loss]:");
-     scanf_s("%f", &lossprob);
-     printf("Enter packet corruption probability [0.0 for no corruption]:");
-     scanf_s("%f", &corruptprob);
-     printf("Enter average time between messages from sender's layer5 [ > 0.0]:");
-     scanf_s("%f", &lambda);
-     printf("Enter TRACE:");
-     scanf_s("%d", &TRACE);
+     //printf("-----  Stop and Wait Network Simulator Version 1.1 -------- \n\n");
+     //printf("Enter the number of messages to simulate: ");
+     //scanf_s("%d", &nsimmax);
+     //printf("Enter  packet loss probability [enter 0.0 for no loss]:");
+     //scanf_s("%f", &lossprob);
+     //printf("Enter packet corruption probability [0.0 for no corruption]:");
+     //scanf_s("%f", &corruptprob);
+     //printf("Enter average time between messages from sender's layer5 [ > 0.0]:");
+     //scanf_s("%f", &lambda);
+     //printf("Enter TRACE:");
+     //scanf_s("%d", &TRACE);
 
      srand(9999);              /* init random number generator */
      sum = 0.0;                /* test random number generator for students */
