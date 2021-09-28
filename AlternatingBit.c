@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>                                                             
+#include <stdlib.h>
 #define _CRT_SECURE_NO_WARNINGS
 
 /* ******************************************************************
@@ -126,7 +126,7 @@ struct event {
 struct event* evlist = NULL;   /* the event list */
 
 /* possible events: */
-#define  TIMER_INTERRUPT 0  
+#define  TIMER_INTERRUPT 0
 #define  FROM_LAYER5     1
 #define  FROM_LAYER3     2
 
@@ -288,7 +288,6 @@ generate_next_arrival()
 {
      double x, log(), ceil();
      struct event* evptr;
-     char* malloc();
      float ttime;
      int tempint;
 
@@ -399,7 +398,6 @@ float increment;
 
      struct event* q;
      struct event* evptr;
-     char* malloc();
 
      if (TRACE > 2)
           printf("          START TIMER: starting timer at %f\n", time);
@@ -427,7 +425,6 @@ struct pkt packet;
 {
      struct pkt* mypktptr;
      struct event* evptr, * q;
-     char* malloc();
      float lastime, x, jimsrand();
      int i;
 
