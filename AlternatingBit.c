@@ -19,7 +19,8 @@
 
 #define BIDIRECTIONAL 0    /* change to 1 if you're doing extra credit */
 /* and write a routine called B_output */
-
+#define ACK 16
+#define NACK -16
 /* a "msg" is the data unit passed from layer 5 (teachers code) to layer  */
 /* 4 (students' code).  It contains the data (characters) to be delivered */
 /* to layer 5 via the students transport level protocol entities.         */
@@ -37,18 +38,40 @@ struct pkt {
      char payload[20];
 };
 
+struct pkt a_packet_to_resend;
+struct pkt b_packet_to_resend;
+
 /********* STUDENTS WRITE THE NEXT SEVEN ROUTINES *********/
 
-/* called from layer 5, passed the data to be sent to other side */
+// This gets she sum of all the bits in the packet 
+GetSum(struct pkt packet) {
+     int sum = 0;
+
+     sum = sum + packet.acknum;
+     sum = sum + packet.seqnum;
+     for (int i = 0; i < 20; i++) {
+          sum += packet.payload[i];
+     }
+     return sum;
+}
+
 A_output(message)
 struct msg message;
 {
-      struct pkt p;
-      printf("Message Data: %.20s\n", message.data);
-      memcpy(p.payload, message.data, 20);
-      printf("Package Payload: %.20s\n", p.payload);
-      tolayer3(1, p);
-      return 0;
+     // Build packet 
+     struct pkt p;
+     memcpy(p.payload, message.data, 20);
+     p.seqnum = 1;
+
+     // ~ applies ones complemnt to the sum giving us a check sum
+     p.checksum = ~ GetSum(p);
+
+     // Save the packet in case we need to retransmit 
+     a_packet_to_resend = p;
+     
+     // Send to b at layer 3 
+     tolayer3(0, p);
+     return 0;
 }
 
 B_output(message)  /* need be completed only for extra credit */
@@ -61,7 +84,18 @@ struct msg message;
 A_input(packet)
 struct pkt packet;
 {
+     // If the packet is corrupt send negative ack back and end function 
+     if (packet.checksum != ~GetSum(packet)) {
+          packet.acknum = NACK;
+          // ~ applies ones complemnt to the sum giving us a check sum
+          packet.checksum = ~GetSum(packet);
+          tolayer3(0, packet);
+          return 0;
+     }
 
+     // Else handle the packet 
+     if (packet.acknum == NACK)
+          tolayer3(0,a_packet_to_resend);
 }
 
 /* called when A's timer goes off */
@@ -74,7 +108,7 @@ A_timerinterrupt()
 /* entity A routines are called. You can use it to do any initialization */
 A_init()
 {
-
+     
 }
 
 
@@ -84,6 +118,33 @@ int received_packet_count;
 B_input(packet)
 struct pkt packet;
 {
+
+     // if the packet is corrupt send negative ack so they can re transmit 
+     // (the ones complement will be different if any of the packet is corrupt)
+     if (packet.checksum != ~GetSum(packet)) {
+          packet.acknum = NACK;
+          
+          // update the check sum so if this packet is corrupt we can re transmit 
+          packet.checksum = ~GetSum(packet);
+
+          // Save the packet incase we need to resend our response 
+          b_packet_to_resend = packet;
+          
+          // Send to A at layer 3 
+          tolayer3(1, packet);
+     }
+     // Else the packet is not corrupt so handle it 
+     else {
+          // if the packet recieved was NACK
+          if (packet.acknum == NACK) {
+               // They didn't understand our re transmit request so send it again 
+               tolayer3(1, b_packet_to_resend);
+          }
+          else {
+               // The packet is good so we can send data to B at layer 5 
+               tolayer5(0, packet.payload);
+          }
+     }
 }
 
 /* called when B's timer goes off */
@@ -137,13 +198,13 @@ struct event* evlist = NULL;   /* the event list */
 
 
 
-int TRACE = 1;             /* for my debugging */
+int TRACE = 3;             /* for my debugging */
 int nsim = 0;              /* number of messages from 5 to 4 so far */
-int nsimmax = 3;           /* number of msgs to generate, then stop */
+int nsimmax = 25;           /* number of msgs to generate, then stop */
 float time = 0.000;
 float lossprob = 0;            /* probability that a packet is dropped  */
-float corruptprob = 0;         /* probability that one bit is packet is flipped */
-float lambda = 1000;              /* arrival rate of messages from layer 5 */
+float corruptprob = 0.2;         /* probability that one bit is packet is flipped */
+float lambda = 100;              /* arrival rate of messages from layer 5 */
 int   ntolayer3;           /* number sent into layer 3 */
 int   nlost;               /* number lost in media */
 int ncorrupt;              /* number corrupted by media*/
