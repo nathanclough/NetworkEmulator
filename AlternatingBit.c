@@ -1,5 +1,5 @@
 #include <stdio.h>
-
+#include <string.h>
 /* ******************************************************************
  ALTERNATING BIT AND GO-BACK-N NETWORK EMULATOR: VERSION 1.1  J.F.Kurose
 
@@ -36,14 +36,15 @@ struct pkt {
 
 /********* STUDENTS WRITE THE NEXT SEVEN ROUTINES *********/
 
-
-
-
 /* called from layer 5, passed the data to be sent to other side */
 A_output(message)
   struct msg message;
 {
-
+  struct pkt p;
+  printf("Packet Payload: %s",p.payload);
+  memcpy(p.payload,message.data,20);
+  printf("Message Data: %s",p.payload);
+  return 0;
 }
 
 B_output(message)  /* need be completed only for extra credit */
@@ -69,11 +70,12 @@ A_timerinterrupt()
 /* entity A routines are called. You can use it to do any initialization */
 A_init()
 {
+  
 }
 
 
 /* Note that with simplex transfer from a-to-B, there is no B_output() */
-
+int received_packet_count;
 /* called from layer 3, when a packet arrives for layer 4 at B*/
 B_input(packet)
   struct pkt packet;
@@ -89,6 +91,7 @@ B_timerinterrupt()
 /* entity B routines are called. You can use it to do any initialization */
 B_init()
 {
+  received_packet_count = 0;
 }
 
 
