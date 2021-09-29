@@ -100,13 +100,11 @@ A_output(message)
 struct msg message;
 {
      printf("A Input %.20s\n", message.data);
-     if (wait_to_send == 1) {
-          Insert(message.data);
-     }
-     else {
-          struct pkt p = CreateNewPacket(message.data);
-          SendPacketFromAToLayerThreeB(p);
-     }
+
+     struct pkt p = CreateNewPacket(message.data);
+     SendPacketFromAToLayerThreeB(p);
+
+     printf("A sends %.20s to B\n", message.data);
      return 0;
 }
 
@@ -122,6 +120,7 @@ struct pkt packet;
 {
      // If the packet is corrupt send negative ack back and end function 
      if (packet.checksum != ~GetSum(packet)) {
+          printf("A recieves corrupt response from B\n");
           packet.acknum = NACK;
           // ~ applies ones complemnt to the sum giving us a check sum
           packet.checksum = ~GetSum(packet);
@@ -146,12 +145,14 @@ struct pkt packet;
 /* called when A's timer goes off */
 A_timerinterrupt()
 {
+     printf("A timer interrupt\n");
      // The TIMEOUT has been reached 
      // set sequence number to 0 to show duplicate  
      a_packet_to_resend.seqnum = current_sequence;
      a_packet_to_resend.checksum = ~GetSum(a_packet_to_resend);
 
      // Resend packet 
+     printf("A resends packet %.20s\n", a_packet_to_resend.payload);
      SendPacketFromAToLayerThreeB(a_packet_to_resend);
 }
 
@@ -174,7 +175,7 @@ struct pkt packet;
      // (the ones complement will be different if any of the packet is corrupt)
      if (packet.checksum != ~GetSum(packet)) {
           packet.acknum = NACK;
-          
+          printf("B recieves corrupt packet from A\n");
           // update the check sum so if this packet is corrupt we can re transmit 
           packet.checksum = ~GetSum(packet);
 
@@ -187,7 +188,8 @@ struct pkt packet;
      else {
           // if the packet recieved was NACK
           if (packet.acknum == NACK) {
-               // They didn't understand our re transmit request so send it again 
+               // They didn't understand our re transmit request so send it again
+               printf("B recieves NACK from A\n");
                tolayer3(1, b_packet_to_resend);
           }
           // Packet is ACK
@@ -203,6 +205,7 @@ struct pkt packet;
                }
 
                // Send the ACK 
+               printf("B sends ACK\n");
                packet.acknum = ACK;
                packet.checksum = ~GetSum(packet);
                tolayer3(1, packet);
