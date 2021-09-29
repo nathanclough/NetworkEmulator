@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include "PacketQueue.h"
 #define _CRT_SECURE_NO_WARNINGS
 
 /* ******************************************************************
@@ -16,11 +17,12 @@
    - packets will be delivered in the order in which they were sent
      (although some can be lost).
 **********************************************************************/
-
+// Settings to use: 25,.3,.3,100
 #define BIDIRECTIONAL 0    /* change to 1 if you're doing extra credit */
 /* and write a routine called B_output */
 #define ACK 16
 #define NACK -16
+#define TIMEOUT 50.0
 /* a "msg" is the data unit passed from layer 5 (teachers code) to layer  */
 /* 4 (students' code).  It contains the data (characters) to be delivered */
 /* to layer 5 via the students transport level protocol entities.         */
@@ -32,6 +34,7 @@ struct msg {
 /* 3 (teachers code).  Note the pre-defined packet structure, which all   */
 /* students must follow. */
 struct pkt {
+     // This is the alternating bit; 1 means new packet, 0 means resend
      int seqnum;
      int acknum;
      int checksum;
@@ -40,8 +43,47 @@ struct pkt {
 
 struct pkt a_packet_to_resend;
 struct pkt b_packet_to_resend;
-
+int current_sequence = 1;
+int b_recieved_sequence = -1;
+int wait_to_send = 0;
 /********* STUDENTS WRITE THE NEXT SEVEN ROUTINES *********/
+
+
+SendPacketFromAToLayerThreeB(struct pkt packet) {
+     a_packet_to_resend = packet;
+     wait_to_send = 1;
+     starttimer(0, TIMEOUT);
+     tolayer3(0, packet);
+}
+
+struct pkt CreateNewPacket(char* data) {
+
+     struct pkt p;
+     memcpy(p.payload, data, 20);
+
+     // Change sequence number since this is a new packet 
+     current_sequence = (current_sequence + 1) % 2;
+     p.seqnum = current_sequence;
+
+     // ~ applies ones complemnt to the sum giving us a check sum
+     p.checksum = ~GetSum(p);
+
+     return p;
+}
+
+HandleAckFromB() {
+     stoptimer(0);
+     // If the Queue is not empty send the next packet 
+     while ( !IsEmpty()) {
+          char data[21];
+          RemoveData(data);
+          struct pkt p = CreateNewPacket(data);
+          SendPacketFromAToLayerThreeB(p);
+          return 0;
+     }
+     wait_to_send = 0;
+}
+
 
 // This gets she sum of all the bits in the packet 
 GetSum(struct pkt packet) {
@@ -58,26 +100,20 @@ GetSum(struct pkt packet) {
 A_output(message)
 struct msg message;
 {
-     // Build packet 
-     struct pkt p;
-     memcpy(p.payload, message.data, 20);
-     p.seqnum = 1;
-
-     // ~ applies ones complemnt to the sum giving us a check sum
-     p.checksum = ~ GetSum(p);
-
-     // Save the packet in case we need to retransmit 
-     a_packet_to_resend = p;
-     
-     // Send to b at layer 3 
-     tolayer3(0, p);
+     if (wait_to_send == 1) {
+          Insert(message.data);
+     }
+     else {
+          struct pkt p = CreateNewPacket(message.data);
+          SendPacketFromAToLayerThreeB(p);
+     }
      return 0;
 }
 
 B_output(message)  /* need be completed only for extra credit */
 struct msg message;
 {
-
+     
 }
 
 /* called from layer 3, when a packet arrives for layer 4 */
@@ -89,26 +125,39 @@ struct pkt packet;
           packet.acknum = NACK;
           // ~ applies ones complemnt to the sum giving us a check sum
           packet.checksum = ~GetSum(packet);
+          stoptimer(0);
           tolayer3(0, packet);
+          starttimer(0,TIMEOUT);
           return 0;
      }
 
      // Else handle the packet 
-     if (packet.acknum == NACK)
-          tolayer3(0,a_packet_to_resend);
+     if (packet.acknum == NACK) {
+          stoptimer(0);
+          SendPacketFromAToLayerThreeB(a_packet_to_resend);   
+     }
+     else {
+          HandleAckFromB();
+     }
 }
 
 /* called when A's timer goes off */
 A_timerinterrupt()
 {
+     // The TIMEOUT has been reached 
+     // set sequence number to 0 to show duplicate  
+     a_packet_to_resend.seqnum = current_sequence;
+     a_packet_to_resend.checksum = ~GetSum(a_packet_to_resend);
 
+     // Resend packet 
+     SendPacketFromAToLayerThreeB(a_packet_to_resend);
 }
 
 /* the following routine will be called once (only) before any other */
 /* entity A routines are called. You can use it to do any initialization */
 A_init()
 {
-     
+
 }
 
 
@@ -129,7 +178,6 @@ struct pkt packet;
 
           // Save the packet incase we need to resend our response 
           b_packet_to_resend = packet;
-          
           // Send to A at layer 3 
           tolayer3(1, packet);
      }
@@ -140,9 +188,22 @@ struct pkt packet;
                // They didn't understand our re transmit request so send it again 
                tolayer3(1, b_packet_to_resend);
           }
+          // Packet is ACK
           else {
-               // The packet is good so we can send data to B at layer 5 
-               tolayer5(0, packet.payload);
+               
+               // If new packet 
+               if (packet.seqnum != b_recieved_sequence) {
+                    // Send the data to B at layer 5 
+                    tolayer5(0, packet.payload);
+                    
+                    // Set the recieved sequence 
+                    b_recieved_sequence = packet.seqnum;
+               }
+
+               // Send the ACK 
+               packet.acknum = ACK;
+               packet.checksum = ~GetSum(packet);
+               tolayer3(1, packet);
           }
      }
 }
@@ -202,8 +263,8 @@ int TRACE = 3;             /* for my debugging */
 int nsim = 0;              /* number of messages from 5 to 4 so far */
 int nsimmax = 25;           /* number of msgs to generate, then stop */
 float time = 0.000;
-float lossprob = 0;            /* probability that a packet is dropped  */
-float corruptprob = 0.2;         /* probability that one bit is packet is flipped */
+float lossprob = 0.3;            /* probability that a packet is dropped  */
+float corruptprob = 0.3;         /* probability that one bit is packet is flipped */
 float lambda = 100;              /* arrival rate of messages from layer 5 */
 int   ntolayer3;           /* number sent into layer 3 */
 int   nlost;               /* number lost in media */
@@ -297,17 +358,17 @@ init()                         /* initialize the simulator */
      float jimsrand();
 
 
-     //printf("-----  Stop and Wait Network Simulator Version 1.1 -------- \n\n");
-     //printf("Enter the number of messages to simulate: ");
-     //scanf_s("%d", &nsimmax);
-     //printf("Enter  packet loss probability [enter 0.0 for no loss]:");
-     //scanf_s("%f", &lossprob);
-     //printf("Enter packet corruption probability [0.0 for no corruption]:");
-     //scanf_s("%f", &corruptprob);
-     //printf("Enter average time between messages from sender's layer5 [ > 0.0]:");
-     //scanf_s("%f", &lambda);
-     //printf("Enter TRACE:");
-     //scanf_s("%d", &TRACE);
+     printf("-----  Stop and Wait Network Simulator Version 1.1 -------- \n\n");
+     printf("Enter the number of messages to simulate: ");
+     scanf_s("%d", &nsimmax);
+     printf("Enter  packet loss probability [enter 0.0 for no loss]:");
+     scanf_s("%f", &lossprob);
+     printf("Enter packet corruption probability [0.0 for no corruption]:");
+     scanf_s("%f", &corruptprob);
+     printf("Enter average time between messages from sender's layer5 [ > 0.0]:");
+     scanf_s("%f", &lambda);
+     printf("Enter TRACE:");
+     scanf_s("%d", &TRACE);
 
      srand(9999);              /* init random number generator */
      sum = 0.0;                /* test random number generator for students */
