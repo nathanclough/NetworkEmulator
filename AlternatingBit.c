@@ -57,7 +57,6 @@ SendPacketFromAToLayerThreeB(struct pkt packet) {
 }
 
 struct pkt CreateNewPacket(char* data) {
-
      struct pkt p;
      memcpy(p.payload, data, 20);
 
@@ -100,6 +99,7 @@ GetSum(struct pkt packet) {
 A_output(message)
 struct msg message;
 {
+     printf("A Input %.20s\n", message.data);
      if (wait_to_send == 1) {
           Insert(message.data);
      }
@@ -134,10 +134,12 @@ struct pkt packet;
      // Else handle the packet 
      if (packet.acknum == NACK) {
           stoptimer(0);
-          SendPacketFromAToLayerThreeB(a_packet_to_resend);   
+          SendPacketFromAToLayerThreeB(a_packet_to_resend);
+          printf("A recieves NACK from B \nA Resends %.20s \n", a_packet_to_resend.payload);
      }
      else {
           HandleAckFromB();
+          printf("A recieves ACK from B\n");
      }
 }
 
@@ -195,7 +197,7 @@ struct pkt packet;
                if (packet.seqnum != b_recieved_sequence) {
                     // Send the data to B at layer 5 
                     tolayer5(0, packet.payload);
-                    
+                    printf("B recieved packet %.20s\n", packet.payload);
                     // Set the recieved sequence 
                     b_recieved_sequence = packet.seqnum;
                }
