@@ -125,8 +125,8 @@ struct pkt packet;
           // ~ applies ones complemnt to the sum giving us a check sum
           packet.checksum = ~GetSum(packet);
           stoptimer(0);
+          starttimer(0, TIMEOUT);
           tolayer3(0, packet);
-          starttimer(0,TIMEOUT);
           return 0;
      }
 
