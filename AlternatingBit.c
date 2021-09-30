@@ -70,20 +70,6 @@ struct pkt CreateNewPacket(char* data) {
      return p;
 }
 
-HandleAckFromB() {
-     stoptimer(0);
-     // If the Queue is not empty send the next packet 
-     while ( !IsEmpty()) {
-          char data[21];
-          RemoveData(data);
-          struct pkt p = CreateNewPacket(data);
-          SendPacketFromAToLayerThreeB(p);
-          return 0;
-     }
-     wait_to_send = 0;
-}
-
-
 // This gets she sum of all the bits in the packet 
 GetSum(struct pkt packet) {
      int sum = 0;
@@ -137,7 +123,7 @@ struct pkt packet;
           printf("A recieves NACK from B \nA Resends %.20s \n", a_packet_to_resend.payload);
      }
      else {
-          HandleAckFromB();
+          stoptimer(0);
           printf("A recieves ACK from B\n");
      }
 }
@@ -307,7 +293,7 @@ main()
                printf(" entity: %d\n", eventptr->eventity);
           }
           time = eventptr->evtime;        /* update time to next event time */
-          if (nsim == nsimmax)
+          if (nsim >= nsimmax && eventptr->evtype != FROM_LAYER3)
                break;                        /* all done with simulation */
           if (eventptr->evtype == FROM_LAYER5) {
                generate_next_arrival();   /* set up future arrival */
