@@ -1,0 +1,121 @@
+-----  Stop and Wait Network Simulator Version 1.1 --------
+
+Enter the number of messages to simulate: 10
+Enter  packet loss probability [enter 0.0 for no loss]:.3
+Enter packet corruption probability [0.0 for no corruption]:.3
+Enter average time between messages from sender's layer5 [ > 0.0]:10000
+Enter TRACE:0
+A Input aaaaaaaaaaaaaaaaaaaa
+A sends aaaaaaaaaaaaaaaaaaaa to B
+B recieved packet aaaaaaaaaaaaaaaaaaaa
+B sends ACK
+A recieves ACK from B
+A Input bbbbbbbbbbbbbbbbbbbb
+A sends bbbbbbbbbbbbbbbbbbbb to B
+B recieved packet bbbbbbbbbbbbbbbbbbbb
+B sends ACK
+A recieves ACK from B
+A Input cccccccccccccccccccc
+A sends cccccccccccccccccccc to B
+B recieved packet cccccccccccccccccccc
+B sends ACK
+A recieves ACK from B
+A Input dddddddddddddddddddd
+A sends dddddddddddddddddddd to B
+B recieves corrupt packet from A
+A recieves NACK from B
+A Resends dddddddddddddddddddd
+B recieved packet dddddddddddddddddddd
+B sends ACK
+A timer interrupt
+A resends packet dddddddddddddddddddd
+B sends ACK
+A recieves ACK from B
+A Input eeeeeeeeeeeeeeeeeeee
+A sends eeeeeeeeeeeeeeeeeeee to B
+B recieves corrupt packet from A
+A Input ffffffffffffffffffff
+Warning: attempt to start a timer that is already started
+A sends ffffffffffffffffffff to B
+A recieves NACK from B
+A Resends ffffffffffffffffffff
+B sends ACK
+A timer interrupt
+A resends packet ffffffffffffffffffff
+B sends ACK
+A recieves ACK from B
+A Input gggggggggggggggggggg
+A sends gggggggggggggggggggg to B
+A timer interrupt
+A resends packet gggggggggggggggggggg
+B recieves corrupt packet from A
+A recieves NACK from B
+A Resends gggggggggggggggggggg
+B recieves corrupt packet from A
+A timer interrupt
+A resends packet gggggggggggggggggggg
+B recieves corrupt packet from A
+A timer interrupt
+A resends packet gggggggggggggggggggg
+A timer interrupt
+A resends packet gggggggggggggggggggg
+B recieved packet gggggggggggggggggggg
+B sends ACK
+A recieves corrupt response from B
+A timer interrupt
+A resends packet gggggggggggggggggggg
+B sends ACK
+A timer interrupt
+A resends packet gggggggggggggggggggg
+B sends ACK
+A recieves corrupt response from B
+A timer interrupt
+A resends packet gggggggggggggggggggg
+B sends ACK
+A recieves ACK from B
+A Input hhhhhhhhhhhhhhhhhhhh
+A sends hhhhhhhhhhhhhhhhhhhh to B
+B recieves corrupt packet from A
+A timer interrupt
+A resends packet hhhhhhhhhhhhhhhhhhhh
+B recieved packet hhhhhhhhhhhhhhhhhhhh
+B sends ACK
+A recieves corrupt response from B
+B recieves NACK from A
+A timer interrupt
+A resends packet hhhhhhhhhhhhhhhhhhhh
+A timer interrupt
+A resends packet hhhhhhhhhhhhhhhhhhhh
+A timer interrupt
+A resends packet hhhhhhhhhhhhhhhhhhhh
+B sends ACK
+A timer interrupt
+A resends packet hhhhhhhhhhhhhhhhhhhh
+B recieves corrupt packet from A
+A recieves NACK from B
+A Resends hhhhhhhhhhhhhhhhhhhh
+A timer interrupt
+A resends packet hhhhhhhhhhhhhhhhhhhh
+B sends ACK
+A recieves ACK from B
+A Input iiiiiiiiiiiiiiiiiiii
+A sends iiiiiiiiiiiiiiiiiiii to B
+A timer interrupt
+A resends packet iiiiiiiiiiiiiiiiiiii
+B recieved packet iiiiiiiiiiiiiiiiiiii
+B sends ACK
+A timer interrupt
+A resends packet iiiiiiiiiiiiiiiiiiii
+B sends ACK
+A recieves ACK from B
+A Input jjjjjjjjjjjjjjjjjjjj
+A sends jjjjjjjjjjjjjjjjjjjj to B
+B recieved packet jjjjjjjjjjjjjjjjjjjj
+B sends ACK
+A recieves ACK from B
+ Simulator terminated at time 108644.054688
+ after sending 10 msgs from layer5
+
+C:\Users\Nathan\Documents\School\Networking\ProjectTwo\NetworkEmulator\Debug\NetworkEmulator.exe (process 1020) exited with code 0.
+To automatically close the console when debugging stops, enable Tools->Options->Debugging->Automatically close the console when debugging stops.
+Press any key to close this window . . .
