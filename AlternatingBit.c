@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "PacketQueue.h"
 #define _CRT_SECURE_NO_WARNINGS
 
 /* ******************************************************************
@@ -293,7 +292,7 @@ main()
                printf(" entity: %d\n", eventptr->eventity);
           }
           time = eventptr->evtime;        /* update time to next event time */
-          if (nsim >= nsimmax && eventptr->evtype != FROM_LAYER3)
+          if (nsim >= nsimmax && eventptr->evtype != FROM_LAYER3 && eventptr->evtype != TIMER_INTERRUPT)
                break;                        /* all done with simulation */
           if (eventptr->evtype == FROM_LAYER5) {
                generate_next_arrival();   /* set up future arrival */
