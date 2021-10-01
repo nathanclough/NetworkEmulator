@@ -17,8 +17,12 @@
    - packets will be delivered in the order in which they were sent
      (although some can be lost).
 **********************************************************************/
-#define TIMEOUT 100.0
-#define BIDIRECTIONAL 0    /* change to 1 if you're doing extra credit */
+#define TIMEOUT 1000.0
+#define NACK -16
+#define ACK 16
+#define BIDIRECTIONAL 0 
+#define N 10
+/* change to 1 if you're doing extra credit */
 /* and write a routine called B_output */
 
 /* a "msg" is the data unit passed from layer 5 (teachers code) to layer  */
@@ -39,10 +43,9 @@ struct pkt {
 };
 
 int base = 0;
+int nextAck = 0;
 int nextNum = 0;
-struct pkt * Buffer;
-struct pkt * ptr; // this is the index of the buffer
-
+struct pkt * Buffer; // this is first element in the buffer
 GetSum(struct pkt * packet) {
      int sum = 0;
 
@@ -66,24 +69,51 @@ void CreateNewPacket(struct pkt * p, char* data) {
      return p;
 }
 
+struct pkt GetResponsePkt(int r, int sequence){
+     struct pkt p;
+     p.acknum = r;
+     p.seqnum = sequence;
+     p.checksum = ~GetSum(&p);
+     return p;
+}
+
+int IsCorrupt(struct pkt p) {
+     if (~GetSum(&p) == p.checksum) {
+          return 0;
+     }
+     else {
+          return 1;
+     }
+}
+
+void GoBackN() {
+
+     printf("GoBackN: resending packets %d - %d\n", nextAck, nextNum);
+     for (int i = nextAck; i < nextNum; i++) {
+          tolayer3(0,*(Buffer+i));
+     }
+     starttimer(0,TIMEOUT);
+}
+
 /********* STUDENTS WRITE THE NEXT SEVEN ROUTINES *********/
 
 /* called from layer 5, passed the data to be sent to other side */
 A_output(message)
 struct msg message;
 {
-     if(nextNum < base + 10){
-		CreateNewPacket(ptr,message.data);
-		tolayer3(0,*ptr);
+     if(nextNum < base+N){
+          struct pkt* p = Buffer + nextNum;
+		CreateNewPacket(p,message.data);
+		tolayer3(0,*p);
 		if(base == nextNum){
 			starttimer(0,TIMEOUT);
 		}
-		ptr ++;
 		nextNum ++;
 	 }
-	 else{
-		 printf("Dropped Packet %.20s",message.data);
-	 }
+     else {
+          printf("Dropped Packet %.20s", message.data);
+     }
+	 
 }
 
 B_output(message)  /* need be completed only for extra credit */
@@ -96,31 +126,69 @@ struct msg message;
 A_input(packet)
 struct pkt packet;
 {
-
+     if (IsCorrupt(packet)==1) {
+          // Handle Corrupt Packet
+          printf("corrupt response from b");
+          stoptimer(0);
+          GoBackN();
+     }
+     else {
+          if (packet.acknum == ACK && packet.seqnum == (Buffer+nextAck)->seqnum) {
+               nextAck++;
+               if (nextAck == N) {
+                    Buffer = (struct pkt*)malloc(sizeof(struct pkt) * N);
+                    nextAck = 0;
+                    nextNum = 0;
+                    stoptimer(0);
+               }
+          }
+          else if(packet.acknum == NACK) {
+               // Resend from last without ACK to end
+               stoptimer(0);
+               GoBackN();
+          }
+     }
 }
 
 /* called when A's timer goes off */
 A_timerinterrupt()
 {
-
-	
+     GoBackN();
+     starttimer(0,TIMEOUT);
 }
 
 /* the following routine will be called once (only) before any other */
 /* entity A routines are called. You can use it to do any initialization */
 A_init()
 {
-	Buffer = (struct pkt*)malloc(sizeof(struct pkt) * 10);
-	ptr = Buffer;
+	Buffer = (struct pkt*)malloc(sizeof(struct pkt) * N);
 }
 
 
 /* Note that with simplex transfer from a-to-B, there is no B_output() */
-int received_packet_count;
+int nextSequence;
 /* called from layer 3, when a packet arrives for layer 4 at B*/
 B_input(packet)
 struct pkt packet;
 {
+     if (IsCorrupt(packet)==1) {
+
+          struct pkt p = GetResponsePkt(NACK, -1);
+          int x = IsCorrupt(p);
+          tolayer3(1, p);
+     }
+     else {
+          if (nextSequence == packet.seqnum) {
+               tolayer5(1, packet.payload);
+               nextSequence++;
+               if (nextSequence == 9) {
+                    nextSequence = 0;
+               }
+               struct pkt p = GetResponsePkt(ACK, packet.seqnum);
+               int x = IsCorrupt(p);
+               tolayer3(1, p);
+          }
+     }
 }
 
 /* called when B's timer goes off */
@@ -132,7 +200,7 @@ B_timerinterrupt()
 /* entity B routines are called. You can use it to do any initialization */
 B_init()
 {
-     received_packet_count = 0;
+     nextSequence = 0;
 }
 
 
@@ -176,9 +244,9 @@ struct event* evlist = NULL;   /* the event list */
 
 int TRACE = 3;             /* for my debugging */
 int nsim = 0;              /* number of messages from 5 to 4 so far */
-int nsimmax = 25;           /* number of msgs to generate, then stop */
+int nsimmax = 12;           /* number of msgs to generate, then stop */
 float time = 0.000;
-float lossprob = 0.3;            /* probability that a packet is dropped  */
+float lossprob = 0.0;            /* probability that a packet is dropped  */
 float corruptprob = 0.3;         /* probability that one bit is packet is flipped */
 float lambda = 100;              /* arrival rate of messages from layer 5 */
 int   ntolayer3;           /* number sent into layer 3 */
@@ -275,15 +343,15 @@ init()                         /* initialize the simulator */
 
      printf("-----  Stop and Wait Network Simulator Version 1.1 -------- \n\n");
      printf("Enter the number of messages to simulate: ");
-     scanf_s("%d", &nsimmax);
-     printf("Enter  packet loss probability [enter 0.0 for no loss]:");
-     scanf_s("%f", &lossprob);
-     printf("Enter packet corruption probability [0.0 for no corruption]:");
-     scanf_s("%f", &corruptprob);
-     printf("Enter average time between messages from sender's layer5 [ > 0.0]:");
-     scanf_s("%f", &lambda);
-     printf("Enter TRACE:");
-     scanf_s("%d", &TRACE);
+     //scanf_s("%d", &nsimmax);
+     //printf("Enter  packet loss probability [enter 0.0 for no loss]:");
+     //scanf_s("%f", &lossprob);
+     //printf("Enter packet corruption probability [0.0 for no corruption]:");
+     //scanf_s("%f", &corruptprob);
+     //printf("Enter average time between messages from sender's layer5 [ > 0.0]:");
+     //scanf_s("%f", &lambda);
+     //printf("Enter TRACE:");
+     //scanf_s("%d", &TRACE);
 
      srand(9999);              /* init random number generator */
      sum = 0.0;                /* test random number generator for students */
