@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>                                                             
+#include <stdlib.h>  
+#include "PacketQueue.h"                                                           
 #define _CRT_SECURE_NO_WARNINGS
 
 /* ******************************************************************
@@ -16,7 +17,7 @@
    - packets will be delivered in the order in which they were sent
      (although some can be lost).
 **********************************************************************/
-
+#define TIMEOUT 100.0
 #define BIDIRECTIONAL 0    /* change to 1 if you're doing extra credit */
 /* and write a routine called B_output */
 
@@ -37,17 +38,52 @@ struct pkt {
      char payload[20];
 };
 
+int base = 0;
+int nextNum = 0;
+struct pkt * Buffer;
+struct pkt * ptr; // this is the index of the buffer
+
+GetSum(struct pkt * packet) {
+     int sum = 0;
+
+     sum = sum + packet->acknum;
+     sum = sum + packet->seqnum;
+     for (int i = 0; i < 20; i++) {
+          sum += packet->payload[i];
+     }
+     return sum;
+}
+
+void CreateNewPacket(struct pkt * p, char* data) {
+     memcpy(p->payload, data, 20);
+
+     // Change sequence number since this is a new packet 
+     p->seqnum = nextNum;
+
+     // ~ applies ones complemnt to the sum giving us a check sum
+     p->checksum = ~GetSum(p);
+
+     return p;
+}
+
 /********* STUDENTS WRITE THE NEXT SEVEN ROUTINES *********/
 
 /* called from layer 5, passed the data to be sent to other side */
 A_output(message)
 struct msg message;
 {
-     // struct pkt p;
-     // printf("Packet Payload: %s", p.payload);
-     // memcpy(p.payload, message.data, 20);
-     // printf("Message Data: %s", p.payload);
-     // return 0;
+     if(nextNum < base + 10){
+		CreateNewPacket(ptr,message.data);
+		tolayer3(0,*ptr);
+		if(base == nextNum){
+			starttimer(0,TIMEOUT);
+		}
+		ptr ++;
+		nextNum ++;
+	 }
+	 else{
+		 printf("Dropped Packet %.20s",message.data);
+	 }
 }
 
 B_output(message)  /* need be completed only for extra credit */
@@ -67,13 +103,15 @@ struct pkt packet;
 A_timerinterrupt()
 {
 
+	
 }
 
 /* the following routine will be called once (only) before any other */
 /* entity A routines are called. You can use it to do any initialization */
 A_init()
 {
-
+	Buffer = (struct pkt *)malloc(sizeof(struct pkt *) * 10);
+	ptr = Buffer;
 }
 
 
@@ -125,7 +163,7 @@ struct event {
 struct event* evlist = NULL;   /* the event list */
 
 /* possible events: */
-#define  TIMER_INTERRUPT 0  
+#define  TIMER_INTERRUPT 0
 #define  FROM_LAYER5     1
 #define  FROM_LAYER3     2
 
@@ -136,13 +174,13 @@ struct event* evlist = NULL;   /* the event list */
 
 
 
-int TRACE = 1;             /* for my debugging */
+int TRACE = 3;             /* for my debugging */
 int nsim = 0;              /* number of messages from 5 to 4 so far */
-int nsimmax = 0;           /* number of msgs to generate, then stop */
+int nsimmax = 25;           /* number of msgs to generate, then stop */
 float time = 0.000;
-float lossprob;            /* probability that a packet is dropped  */
-float corruptprob;         /* probability that one bit is packet is flipped */
-float lambda;              /* arrival rate of messages from layer 5 */
+float lossprob = 0.3;            /* probability that a packet is dropped  */
+float corruptprob = 0.3;         /* probability that one bit is packet is flipped */
+float lambda = 100;              /* arrival rate of messages from layer 5 */
 int   ntolayer3;           /* number sent into layer 3 */
 int   nlost;               /* number lost in media */
 int ncorrupt;              /* number corrupted by media*/
@@ -179,7 +217,7 @@ main()
                printf(" entity: %d\n", eventptr->eventity);
           }
           time = eventptr->evtime;        /* update time to next event time */
-          if (nsim == nsimmax)
+          if (nsim >= nsimmax && eventptr->evtype != FROM_LAYER3 && eventptr->evtype != TIMER_INTERRUPT)
                break;                        /* all done with simulation */
           if (eventptr->evtype == FROM_LAYER5) {
                generate_next_arrival();   /* set up future arrival */
@@ -287,7 +325,6 @@ generate_next_arrival()
 {
      double x, log(), ceil();
      struct event* evptr;
-     char* malloc();
      float ttime;
      int tempint;
 
@@ -398,7 +435,6 @@ float increment;
 
      struct event* q;
      struct event* evptr;
-     char* malloc();
 
      if (TRACE > 2)
           printf("          START TIMER: starting timer at %f\n", time);
@@ -426,7 +462,6 @@ struct pkt packet;
 {
      struct pkt* mypktptr;
      struct event* evptr, * q;
-     char* malloc();
      float lastime, x, jimsrand();
      int i;
 
