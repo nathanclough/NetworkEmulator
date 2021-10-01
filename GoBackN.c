@@ -110,7 +110,7 @@ A_timerinterrupt()
 /* entity A routines are called. You can use it to do any initialization */
 A_init()
 {
-	Buffer = (struct pkt *)malloc(sizeof(struct pkt *) * 10);
+	Buffer = (struct pkt*)malloc(sizeof(struct pkt) * 10);
 	ptr = Buffer;
 }
 
