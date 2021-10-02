@@ -88,7 +88,7 @@ int IsCorrupt(struct pkt p) {
 
 void GoBackN() {
 
-     printf("GoBackN: resending packets %d - %d\n", nextAck, nextNum-1);
+     printf("GoBackN: resending packets %d - %d\n", nextAck, nextNum);
      for (int i = nextAck; i < nextNum; i++) {
           tolayer3(0,*(Buffer+i));
      }
