@@ -17,11 +17,11 @@
    - packets will be delivered in the order in which they were sent
      (although some can be lost).
 **********************************************************************/
-#define TIMEOUT 1000.0
+#define TIMEOUT 250.0
 #define NACK -16
 #define ACK 16
 #define BIDIRECTIONAL 0 
-#define N 10
+#define N 100
 /* change to 1 if you're doing extra credit */
 /* and write a routine called B_output */
 
@@ -88,7 +88,7 @@ int IsCorrupt(struct pkt p) {
 
 void GoBackN() {
 
-     printf("GoBackN: resending packets %d - %d\n", nextAck, nextNum);
+     printf("GoBackN: resending packets %d - %d\n", nextAck, nextNum-1);
      for (int i = nextAck; i < nextNum; i++) {
           tolayer3(0,*(Buffer+i));
      }
@@ -105,13 +105,14 @@ struct msg message;
           struct pkt* p = Buffer + nextNum;
 		CreateNewPacket(p,message.data);
 		tolayer3(0,*p);
+          printf("A sends %.20s to B\n", message.data);
 		if(base == nextNum){
 			starttimer(0,TIMEOUT);
 		}
 		nextNum ++;
 	 }
      else {
-          printf("Dropped Packet %.20s", message.data);
+          printf("Dropped Packet %.20s\n", message.data);
      }
 	 
 }
@@ -128,22 +129,22 @@ struct pkt packet;
 {
      if (IsCorrupt(packet)==1) {
           // Handle Corrupt Packet
-          printf("corrupt response from b");
+          printf("A gets corrupt response from b\n");
           stoptimer(0);
           GoBackN();
      }
      else {
           if (packet.acknum == ACK && packet.seqnum == (Buffer+nextAck)->seqnum) {
+               printf("A gets ACK for packet seq %d\n", packet.seqnum);
                nextAck++;
                if (nextAck == N) {
-                    Buffer = (struct pkt*)malloc(sizeof(struct pkt) * N);
                     nextAck = 0;
                     nextNum = 0;
-                    stoptimer(0);
                }
           }
           else if(packet.acknum == NACK) {
                // Resend from last without ACK to end
+               printf("A gets NACK");
                stoptimer(0);
                GoBackN();
           }
@@ -154,7 +155,6 @@ struct pkt packet;
 A_timerinterrupt()
 {
      GoBackN();
-     starttimer(0,TIMEOUT);
 }
 
 /* the following routine will be called once (only) before any other */
@@ -172,22 +172,18 @@ B_input(packet)
 struct pkt packet;
 {
      if (IsCorrupt(packet)==1) {
-
-          struct pkt p = GetResponsePkt(NACK, -1);
-          int x = IsCorrupt(p);
-          tolayer3(1, p);
+          tolayer3(1, GetResponsePkt(NACK,-1));
+          printf("B gets corrupt packet\n");
      }
      else {
           if (nextSequence == packet.seqnum) {
+               printf("B gets  %.20s  from A\n", packet.payload);
                tolayer5(1, packet.payload);
                nextSequence++;
-               if (nextSequence == 9) {
-                    nextSequence = 0;
-               }
-               struct pkt p = GetResponsePkt(ACK, packet.seqnum);
-               int x = IsCorrupt(p);
-               tolayer3(1, p);
+               tolayer3(1, GetResponsePkt(ACK,packet.seqnum));
           }
+          printf("B sends ACK to A\n");
+          tolayer3(1, GetResponsePkt(ACK, packet.seqnum));
      }
 }
 
@@ -246,9 +242,9 @@ int TRACE = 3;             /* for my debugging */
 int nsim = 0;              /* number of messages from 5 to 4 so far */
 int nsimmax = 12;           /* number of msgs to generate, then stop */
 float time = 0.000;
-float lossprob = 0.0;            /* probability that a packet is dropped  */
+float lossprob = 0.3;            /* probability that a packet is dropped  */
 float corruptprob = 0.3;         /* probability that one bit is packet is flipped */
-float lambda = 100;              /* arrival rate of messages from layer 5 */
+float lambda = 1000;              /* arrival rate of messages from layer 5 */
 int   ntolayer3;           /* number sent into layer 3 */
 int   nlost;               /* number lost in media */
 int ncorrupt;              /* number corrupted by media*/
@@ -343,15 +339,15 @@ init()                         /* initialize the simulator */
 
      printf("-----  Stop and Wait Network Simulator Version 1.1 -------- \n\n");
      printf("Enter the number of messages to simulate: ");
-     //scanf_s("%d", &nsimmax);
-     //printf("Enter  packet loss probability [enter 0.0 for no loss]:");
-     //scanf_s("%f", &lossprob);
-     //printf("Enter packet corruption probability [0.0 for no corruption]:");
-     //scanf_s("%f", &corruptprob);
-     //printf("Enter average time between messages from sender's layer5 [ > 0.0]:");
-     //scanf_s("%f", &lambda);
-     //printf("Enter TRACE:");
-     //scanf_s("%d", &TRACE);
+     scanf_s("%d", &nsimmax);
+     printf("Enter  packet loss probability [enter 0.0 for no loss]:");
+     scanf_s("%f", &lossprob);
+     printf("Enter packet corruption probability [0.0 for no corruption]:");
+     scanf_s("%f", &corruptprob);
+     printf("Enter average time between messages from sender's layer5 [ > 0.0]:");
+     scanf_s("%f", &lambda);
+     printf("Enter TRACE:");
+     scanf_s("%d", &TRACE);
 
      srand(9999);              /* init random number generator */
      sum = 0.0;                /* test random number generator for students */

@@ -1,0 +1,107 @@
+-----  Stop and Wait Network Simulator Version 1.1 --------
+
+Enter the number of messages to simulate: 10
+Enter  packet loss probability [enter 0.0 for no loss]:.3
+Enter packet corruption probability [0.0 for no corruption]:.3
+Enter average time between messages from sender's layer5 [ > 0.0]:1000
+Enter TRACE:0
+A sends aaaaaaaaaaaaaaaaaaaa to B
+B gets  aaaaaaaaaaaaaaaaaaaa  from A
+B sends ACK to A
+A gets ACK for packet seq 0
+A gets corrupt response from b
+GoBackN: resending packets 1 - 0
+GoBackN: resending packets 1 - 0
+GoBackN: resending packets 1 - 0
+GoBackN: resending packets 1 - 0
+GoBackN: resending packets 1 - 0
+GoBackN: resending packets 1 - 0
+GoBackN: resending packets 1 - 0
+A sends bbbbbbbbbbbbbbbbbbbb to B
+B gets  bbbbbbbbbbbbbbbbbbbb  from A
+B sends ACK to A
+A gets ACK for packet seq 1
+GoBackN: resending packets 2 - 1
+GoBackN: resending packets 2 - 1
+GoBackN: resending packets 2 - 1
+A sends cccccccccccccccccccc to B
+B gets corrupt packet
+A gets NACKGoBackN: resending packets 2 - 2
+B gets  cccccccccccccccccccc  from A
+B sends ACK to A
+A gets ACK for packet seq 2
+GoBackN: resending packets 3 - 2
+GoBackN: resending packets 3 - 2
+GoBackN: resending packets 3 - 2
+GoBackN: resending packets 3 - 2
+GoBackN: resending packets 3 - 2
+GoBackN: resending packets 3 - 2
+A sends dddddddddddddddddddd to B
+GoBackN: resending packets 3 - 3
+B gets  dddddddddddddddddddd  from A
+B sends ACK to A
+A gets corrupt response from b
+GoBackN: resending packets 3 - 3
+A gets ACK for packet seq 3
+B sends ACK to A
+A gets corrupt response from b
+GoBackN: resending packets 4 - 3
+GoBackN: resending packets 4 - 3
+GoBackN: resending packets 4 - 3
+A sends eeeeeeeeeeeeeeeeeeee to B
+B gets  eeeeeeeeeeeeeeeeeeee  from A
+B sends ACK to A
+A gets corrupt response from b
+GoBackN: resending packets 4 - 4
+A gets ACK for packet seq 4
+B sends ACK to A
+A gets corrupt response from b
+GoBackN: resending packets 5 - 4
+GoBackN: resending packets 5 - 4
+GoBackN: resending packets 5 - 4
+GoBackN: resending packets 5 - 4
+A sends ffffffffffffffffffff to B
+B gets corrupt packet
+GoBackN: resending packets 5 - 5
+A sends gggggggggggggggggggg to B
+GoBackN: resending packets 5 - 6
+B gets  ffffffffffffffffffff  from A
+B sends ACK to A
+GoBackN: resending packets 5 - 6
+B sends ACK to A
+A gets ACK for packet seq 5
+GoBackN: resending packets 6 - 6
+B gets corrupt packet
+GoBackN: resending packets 6 - 6
+B gets  gggggggggggggggggggg  from A
+B sends ACK to A
+A gets ACK for packet seq 6
+GoBackN: resending packets 7 - 6
+A sends hhhhhhhhhhhhhhhhhhhh to B
+B gets  hhhhhhhhhhhhhhhhhhhh  from A
+B sends ACK to A
+A gets ACK for packet seq 7
+A gets corrupt response from b
+GoBackN: resending packets 8 - 7
+GoBackN: resending packets 8 - 7
+GoBackN: resending packets 8 - 7
+A sends iiiiiiiiiiiiiiiiiiii to B
+B gets corrupt packet
+A gets NACKGoBackN: resending packets 8 - 8
+GoBackN: resending packets 8 - 8
+B gets corrupt packet
+A gets NACKGoBackN: resending packets 8 - 8
+GoBackN: resending packets 8 - 8
+B gets  iiiiiiiiiiiiiiiiiiii  from A
+B sends ACK to A
+A gets ACK for packet seq 8
+GoBackN: resending packets 9 - 8
+A sends jjjjjjjjjjjjjjjjjjjj to B
+B gets  jjjjjjjjjjjjjjjjjjjj  from A
+B sends ACK to A
+A gets ACK for packet seq 9
+GoBackN: resending packets 10 - 9
+GoBackN: resending packets 10 - 9
+GoBackN: resending packets 10 - 9
+ Simulator terminated at time 9445.173828
+ after sending 10 msgs from layer5
